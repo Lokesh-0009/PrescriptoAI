@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}PrescriptoAI{% endblock %}</title>
+
+    <!-- Bootstrap CSS for grid system primarily, customized styling via style.css -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS for professional staggered animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        /* Exact Navbar Spec */
+        .navbar-custom {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            height: 60px;
+            padding: 0;
+        }
+        
+        .navbar-brand {
+            padding-left: 1rem;
+        }
+        
+        .navbar-nav {
+            gap: 28px;
+            padding-right: 1rem;
+        }
+        
+        .nav-link {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            padding: 1.15rem 0 !important;
+            position: relative;
+            transition: var(--transition-fast);
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .nav-link.active {
+            color: var(--primary);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+
+        .btn-logout {
+            border: 1.5px solid var(--border);
+            background-color: var(--bg-surface);
+            color: var(--text-secondary);
+            border-radius: 99px;
+            padding: 4px 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition-fast);
+            margin-left: 16px;
+        }
+
+        .btn-logout:hover {
+            background-color: var(--bg-danger-soft);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        /* Exact Footer Spec */
+        .footer-custom {
+            background-color: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .social-circle {
+            width: 32px;
+            height: 32px;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .social-circle:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container-fluid max-w-1100 px-3 px-lg-0" style="padding-top: 0; padding-bottom: 0;">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+            <i class="fas fa-heartbeat" style="color: var(--primary); font-size: 1.2rem;"></i>
+            <span class="brand-text">PrescriptoAI</span>
+        </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <i class="fas fa-bars" style="color: var(--text-primary);"></i>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/' %}active{% endif %}" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/history' %}active{% endif %}" href="/history">History</a>
+                    </li>
+                    {% if session.get('role') == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/management' %}active{% endif %}" href="/management">Management</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/admin/dashboard' %}active{% endif %}" href="/admin/dashboard">Admin Panel</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/training' %}active{% endif %}" href="/training">Training</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/dashboard' %}active{% endif %}" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path=='/about' %}active{% endif %}" href="/about">About</a>
+                    </li>
+                    {% if session.get('user_id') %}
+                    <li class="nav-item d-flex align-items-center me-2">
+                        <div class="d-flex align-items-center gap-2" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 99px; padding: 5px 14px 5px 10px;">
+                            <div style="width: 28px; height: 28px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 700;">
+                                {{ session.get('username', 'U')[0]|upper }}
+                            </div>
+                            <div style="line-height: 1.2;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-primary);">{{ session.get('username', 'User') }}</div>
+                                <div style="font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: {% if session.get('role') == 'admin' %}var(--primary){% else %}var(--info-blue){% endif %};">{{ session.get('role', 'user') }}</div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item d-flex align-items-center">
+                        <a href="/logout" class="btn-logout text-decoration-none">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- TOAST NOTIFICATIONS -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div style="position: fixed; top: 80px; right: 20px; z-index: 9999; max-width: 380px;">
+        {% for category, message in messages %}
+        <div class="toast-notification" style="background: var(--bg-surface); border: 1px solid var(--border); border-left: 4px solid {% if category == 'success' %}var(--primary){% elif category == 'error' %}var(--danger){% else %}var(--info-blue){% endif %}; border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-lg); margin-bottom: 10px; display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s ease-out;">
+            <div style="width: 32px; height: 32px; background: {% if category == 'success' %}var(--bg-subtle){% elif category == 'error' %}var(--bg-danger-soft){% else %}var(--info-blue-soft){% endif %}; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas {% if category == 'success' %}fa-check{% elif category == 'error' %}fa-times{% else %}fa-info{% endif %}" style="color: {% if category == 'success' %}var(--primary){% elif category == 'error' %}var(--danger){% else %}var(--info-blue){% endif %}; font-size: 0.8rem;"></i>
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); line-height: 1.4;">{{ message }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <style>
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.toast-notification').forEach(el => {
+                el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(60px)';
+                setTimeout(() => el.remove(), 400);
+            });
+        }, 4000);
+    </script>
+    {% endif %}
+    {% endwith %}
+
+    <!-- MAIN CONTENT -->
+    <main class="container max-w-1100 my-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer-custom">
+    <div class="max-w-1100 text-center px-4">
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+            <i class="fas fa-heartbeat" style="color: var(--primary); font-size: 0.85rem;"></i>
+            <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: var(--primary); font-size: 0.85rem;">PrescriptoAI</span>
+        </div>
+        
+        <div class="d-flex justify-content-center gap-3 mb-3">
+            <a href="#" class="social-circle" aria-label="GitHub">
+                <i class="fab fa-github"></i>
+            </a>
+            <a href="#" class="social-circle" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+        
+        <div class="mono-small">
+            &copy; 2026 PrescriptoAI. Intelligent medical documentation.
+        </div>
+    </div>
+</footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Professional animation settings
+        AOS.init({
+            duration: 600,
+            once: true,
+            offset: 80,
+            easing: 'ease-out'
+        });
+
+        // Trigger progress bar animations if they exist
+        window.addEventListener('load', function() {
+            const bars = document.querySelectorAll('.progress-fill');
+            bars.forEach((bar, index) => {
+                setTimeout(() => {
+                    const finalWidth = bar.getAttribute('data-width') || '0%';
+                    bar.style.width = finalWidth;
+                }, 100 * (index + 1));
+            });
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Management Dashboard &ndash; PrescriptoAI{% endblock %}
+
+{% block content %}
+<div class="max-w-1100 pb-5">
+
+    <!-- Header & Action Bar -->
+    <div class="d-flex justify-content-between align-items-end mb-5" data-aos="fade-down">
+        <div class="text-start">
+            <h1 class="page-title mb-2">Staff & Patient Records</h1>
+            <p class="page-subtitle mb-0">Monitor assignments across the organization.</p>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-secondary-custom px-3 py-2" data-bs-toggle="modal" data-bs-target="#addEmployeeModal" style="font-size: 0.85rem;">
+                <i class="fas fa-plus"></i> Add New Employee
+            </button>
+            <button type="button" class="btn-primary-custom px-3 py-2" onclick="alert('Exporting to CSV...')" style="font-size: 0.85rem;">
+                <i class="fas fa-file-export"></i> Export All Results
+            </button>
+        </div>
+    </div>
+
+    <!-- Staff List (List View) -->
+    <div class="row justify-content-center g-3">
+        
+        {% if employees %}
+            {% for emp_id, data in employees.items() %}
+            <div class="col-12" data-aos="fade-up" data-aos-delay="{{ 50 + (loop.index0 % 8) * 50 }}">
+                <div class="medical-card hover-lift p-3" data-bs-toggle="modal" data-bs-target="#patientsModal{{ emp_id }}" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                    
+                    <!-- Left Section: Icon & Info -->
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-box flex-shrink-0" style="width: 50px; height: 50px; font-size: 1.25rem; background-color: var(--bg-surface); color: var(--primary); border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        
+                        <div class="text-start">
+                            <h3 class="section-title mb-1" style="font-size: 1.1rem; margin-top: 0;">{{ data.username }}</h3>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="mono-small" style="font-size: 0.8rem;">ID: {{ data.id }} | Role: {{ data.role|title }}</div>
+                                <span class="badge-custom badge-medicine" style="font-size: 0.75rem; padding: 3px 8px;">
+                                    <i class="fas fa-user-injured me-1"></i> {{ data.patients|length }} Patients
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div>
+                        {% if data.role != 'admin' %}
+                        <div class="d-flex justify-content-end gap-2" onclick="event.stopPropagation();">
+                            <button type="button" class="btn-icon-circle btn-action-view" data-bs-toggle="modal" data-bs-target="#editEmployeeModal{{ data.id }}" title="Edit Employee">
+                                <i class="fas fa-pencil-alt" style="font-size: 0.85rem;"></i>
+                            </button>
+                            
+                            <form action="/delete_employee/{{ data.id }}" method="POST" class="m-0" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete Employee {{ data.id }}?');">
+                                <button type="submit" class="btn-icon-circle btn-action-delete" title="Delete Employee">
+                                    <i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">No employees found.</p>
+            </div>
+        {% endif %}
+        
+    </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border: none; border-radius: 16px; box-shadow: var(--shadow-lg);">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h5 class="modal-title section-title" id="addEmployeeModalLabel">Add New Employee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pt-3 pb-4">
+                <form action="/admin/add_employee" method="POST">
+                    
+                    <div class="mb-3">
+                        <label class="label-text">USERNAME / FULL NAME</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" class="form-control-custom" name="username" placeholder="John Doe" required>
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="label-text">EMAIL ADDRESS</label>
+                        <div class="input-icon-wrapper">
+                            <input type="email" class="form-control-custom" name="email" placeholder="john.doe@hospital.com" required>
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="label-text">PASSWORD</label>
+                        <div class="input-icon-wrapper">
+                            <input type="password" class="form-control-custom" name="password" placeholder="Secure password" required>
+                            <i class="fas fa-lock"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary-custom w-100 py-2">Create Employee</button>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Employee Modals Loop -->
+{% if employees %}
+    {% for emp_id, data in employees.items() %}
+        {% if data.role != 'admin' %}
+        <div class="modal fade" id="editEmployeeModal{{ data.id }}" tabindex="-1" aria-labelledby="editEmployeeModalLabel{{ data.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border: none; border-radius: 16px; box-shadow: var(--shadow-lg);">
+                    <div class="modal-header border-0 pb-0 px-4 pt-4">
+                        <h5 class="modal-title section-title" id="editEmployeeModalLabel{{ data.id }}">Edit Employee</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body px-4 pt-3 pb-4">
+                        <form action="/admin/edit_employee/{{ data.id }}" method="POST">
+                            
+                            <div class="mb-3">
+                                <label class="label-text">USERNAME / FULL NAME</label>
+                                <div class="input-icon-wrapper">
+                                    <input type="text" class="form-control-custom" name="username" value="{{ data.username }}" required>
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="label-text">NEW PASSWORD (Leave blank to keep current)</label>
+                                <div class="input-icon-wrapper">
+                                    <input type="password" class="form-control-custom" name="password" placeholder="Enter new password (optional)">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary-custom w-100 py-2">Save Changes</button>
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Patient Details Modals Loop -->
+{% if employees %}
+    {% for emp_id, data in employees.items() %}
+    <div class="modal fade" id="patientsModal{{ emp_id }}" tabindex="-1" aria-labelledby="patientsModalLabel{{ emp_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content" style="border: none; border-radius: 16px; box-shadow: var(--shadow-lg);">
+                <div class="modal-header border-bottom px-4 py-3" style="background-color: var(--bg-page); border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <div>
+                        <h5 class="modal-title section-title mb-1" id="patientsModalLabel{{ emp_id }}">Processed Patients</h5>
+                        <div class="page-subtitle mb-0">Handled by <strong style="color: var(--primary);">{{ data.username }}</strong></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    {% if data.patients %}
+                        {% for p in data.patients %}
+                        <div class="d-flex justify-content-between align-items-center px-4 py-3" style="border-bottom: 1px solid var(--border);">
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">
+                                    <i class="fas fa-file-medical text-muted me-2" style="font-size: 14px;"></i>{{ p.patient_name }}
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);" class="mt-1">
+                                    Prescribed <b style="color: var(--primary);">{{ p.medicine_name }}</b> by Dr. {{ p.doctor_name }}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="mb-1">
+                                    <span class="mono-text" style="font-size: 0.8rem; background: var(--bg-subtle); padding: 3px 8px; border-radius: 4px; color: var(--text-primary); border: 1px solid var(--border);">
+                                        RX-{{ p.prescription_id }}
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="far fa-clock me-1"></i>{{ p.timestamp }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox mb-3" style="font-size: 2.5rem; color: var(--border-strong);"></i><br>
+                            <span class="section-title text-muted">No patients handled yet.</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% endblock %}

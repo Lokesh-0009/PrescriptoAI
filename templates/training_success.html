@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Training Outcome &ndash; PrescriptoAI{% endblock %}
+
+{% block custom_css %}
+<style>
+/* Upload Box Redesign */
+.training-upload-box {
+    background-color: #FAFDFA;
+    border: 3px dashed rgba(15, 107, 80, 0.4);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    box-shadow: inset 0 0 20px rgba(15, 107, 80, 0.03);
+    margin-top: 1.5rem;
+}
+
+.training-upload-box:hover, .training-upload-box.dragover {
+    background-color: #F0FBF6;
+    border-color: var(--primary);
+    box-shadow: 0 8px 24px rgba(15, 107, 80, 0.08); /* slight lift effect */
+    transform: translateY(-2px);
+}
+
+.upload-icon-circle {
+    width: 56px;
+    height: 56px;
+    background-color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
+}
+
+.training-upload-box:hover .upload-icon-circle {
+    transform: translateY(-4px) scale(1.05);
+}
+
+.upload-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.upload-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.upload-formats {
+    margin-top: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: white;
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row min-vh-50 align-items-center my-5 py-5">
+    <div class="col-md-8 col-lg-6 mx-auto">
+        
+        {% if message %}
+        <div class="medical-card text-center p-5" data-aos="zoom-in" style="border-top: 4px solid var(--success-green);">
+            <div class="mb-4 d-inline-block position-relative">
+                <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="42" cy="42" r="40" fill="#E8F5EF" stroke="#34C78A" stroke-width="4"/>
+                    <path d="M25 42L36 53L60 29" stroke="#10785A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 class="page-title mb-3" style="color: var(--text-primary);">Training Completed</h2>
+            <p class="text-muted mb-4" style="font-size: 1.05rem;">
+                The image has been securely cached in the database. The system will now recognize this image with 100% accuracy on any future uploads.
+            </p>
+            
+            <hr class="my-4" style="border-color: var(--border);">
+            
+            <h4 class="section-title mb-3 text-start">Continue Training</h4>
+            
+            <form id="training-form" action="/train" method="post" enctype="multipart/form-data" class="text-start">
+                    
+                <div id="drop-area" class="training-upload-box mb-4">
+                    <div class="upload-icon-circle">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-title">Select or drag training image</div>
+                    <div class="upload-subtitle">Drop your prescription file here, or click to browse</div>
+                    
+                    <div class="upload-formats">
+                        <i class="fas fa-file-image"></i> Supports JPG, PNG formats
+                    </div>
+                    
+                    <input type="file" id="image" name="image" class="d-none" accept=".jpg,.jpeg,.png,.tif,.tiff">
+                    
+                    <img id="preview" class="mt-0" style="max-width: 100%; max-height: 250px; border-radius: 12px; display: none; margin: 0 auto; box-shadow: var(--shadow-md); border: 2px solid var(--border); background: white; object-fit: contain;">
+                    
+                    <div class="mt-3 text-muted mono-small" id="file-info" style="display: none; background: white; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);"></div>
+                </div>
+                
+                <div class="mb-4 text-start">
+                    <label class="label-text mb-2 d-block">EXACT TRANSCRIPTION</label>
+                    <textarea class="form-control-custom" id="text" name="text" placeholder="Enter exactly what the system should recognize..." required style="min-height: 80px; font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; resize: vertical; border-width: 2px;"></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="/" class="btn" style="color: var(--text-secondary); font-size: 0.9rem;">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Home
+                    </a>
+                    
+                    <button type="submit" class="btn-primary-custom" id="submit-btn" style="height: 44px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; border-radius: 10px; padding: 0 24px;">
+                        Submit Next Image
+                    </button>
+                </div>
+                
+            </form>
+        </div>
+        
+        {% else %}
+        
+        <div class="medical-card text-center p-5" data-aos="zoom-in" style="border-top: 4px solid var(--danger-red);">
+            <div class="mb-4 d-inline-block position-relative">
+                <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="42" cy="42" r="40" fill="#FEF0F0" stroke="#E84040" stroke-width="4"/>
+                    <path d="M28 28L56 56M56 28L28 56" stroke="#C0392B" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2 class="page-title mb-3" style="color: var(--danger-red);">{{ error }}</h2>
+            <p class="text-muted mb-4" style="font-size: 1.05rem;">
+                {{ error_message }}
+            </p>
+            <div class="d-flex justify-content-center mt-4">
+                <a href="/training" class="btn btn-danger-custom px-4">
+                    <i class="fas fa-redo-alt me-2"></i> Try Again
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Only run scripts if the form exists (success state)
+    if(document.getElementById('drop-area')) {
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('image');
+        const preview = document.getElementById('preview');
+        const fileInfo = document.getElementById('file-info');
+        const submitBtn = document.getElementById('submit-btn');
+
+        dropArea.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'));
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'));
+        });
+
+        dropArea.addEventListener('drop', e => {
+            const dt = e.dataTransfer;
+            if (dt.files.length) {
+                fileInput.files = dt.files;
+                handleFileSelect();
+            }
+        });
+
+        function handleFileSelect() {
+            if (fileInput.files.length) {
+                const file = fileInput.files[0];
+                if (!file.type.match('image.*')) {
+                    alert('Please select a valid image file.');
+                    return;
+                }
+                
+                fileInfo.textContent = `${file.name} — ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                fileInfo.style.display = 'inline-block';
+                
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    // Hide default text when image is previewed
+                    dropArea.querySelector('.upload-icon-circle').style.display = 'none';
+                    dropArea.querySelector('.upload-title').style.display = 'none';
+                    dropArea.querySelector('.upload-subtitle').style.display = 'none';
+                    dropArea.querySelector('.upload-formats').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('training-form').addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select a prescription image');
+                return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Uploading...';
+        });
+    }
+</script>
+{% endblock %}

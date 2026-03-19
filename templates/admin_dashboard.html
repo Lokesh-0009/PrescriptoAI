@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard &ndash; PrescriptoAI{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* ===== Stats Cards ===== */
+    .stat-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition-fast);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 14px 14px 0 0;
+    }
+    .stat-card.card-users::before    { background: var(--primary); }
+    .stat-card.card-rx::before       { background: var(--info-blue); }
+    .stat-card.card-audit::before    { background: var(--warning); }
+    .stat-card.card-alerts::before   { background: var(--danger); }
+
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-3px);
+    }
+
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .stat-icon.icon-users   { background: var(--bg-subtle);        color: var(--primary); }
+    .stat-icon.icon-rx       { background: var(--info-blue-soft);   color: var(--info-blue); }
+    .stat-icon.icon-audit    { background: var(--warning-soft);     color: var(--warning); }
+    .stat-icon.icon-alerts   { background: var(--bg-danger-soft);   color: var(--danger); }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--text-primary);
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .stat-sub {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 6px;
+    }
+    .stat-sub .dot {
+        display: inline-block;
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
+    }
+    .dot-active   { background: var(--accent); }
+    .dot-inactive { background: var(--danger); }
+
+    /* ===== User Management Table ===== */
+    .admin-table-wrap {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+    .admin-table-wrap .table-header-bar {
+        background: var(--bg-subtle);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 1.5rem;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .admin-table thead {
+        background: #F4FAF7;
+    }
+    .admin-table th {
+        padding: 0.85rem 1.25rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+    }
+    .admin-table td {
+        padding: 0.85rem 1.25rem;
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--bg-subtle);
+        vertical-align: middle;
+    }
+    .admin-table tbody tr {
+        transition: background 180ms ease;
+    }
+    .admin-table tbody tr:hover {
+        background: #F9FDFA;
+    }
+    .admin-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Status badges */
+    .status-active {
+        background: rgba(52, 201, 139, 0.15);
+        color: var(--primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 99px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .status-active::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+    }
+    .status-inactive {
+        background: var(--bg-danger-soft);
+        color: var(--danger);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 99px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .status-inactive::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--danger);
+    }
+
+    /* Toggle button */
+    .btn-toggle-activate {
+        background: var(--bg-subtle);
+        color: var(--primary);
+        border: 1.5px solid var(--border-strong);
+        border-radius: 8px;
+        padding: 5px 14px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-toggle-activate:hover {
+        background: var(--primary);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+    .btn-toggle-deactivate {
+        background: var(--bg-danger-soft);
+        color: var(--danger);
+        border: 1.5px solid #FECACA;
+        border-radius: 8px;
+        padding: 5px 14px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-toggle-deactivate:hover {
+        background: var(--danger);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* ===== Audit Log Section ===== */
+    .filter-bar {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .filter-group label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-muted);
+    }
+    .filter-group input,
+    .filter-group select {
+        background: var(--bg-subtle);
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 0.85rem;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: var(--text-primary);
+        transition: var(--transition-fast);
+        min-width: 160px;
+    }
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(15, 107, 80, 0.10);
+        background: var(--bg-surface);
+    }
+    .btn-filter {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-filter:hover {
+        background: var(--primary-light);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+    .btn-reset-filter {
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+    .btn-reset-filter:hover {
+        background: var(--bg-subtle);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+    }
+
+    /* Pagination */
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        background: var(--bg-surface);
+    }
+    .pagination-info {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    .pagination-btns {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .page-btn {
+        width: 34px; height: 34px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 0.82rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+    .page-btn:hover:not(:disabled):not(.active) {
+        background: var(--bg-subtle);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .page-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* Audit action badges */
+    .action-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        display: inline-block;
+        text-transform: capitalize;
+    }
+    .action-badge.action-danger {
+        background: var(--bg-danger-soft);
+        color: var(--danger);
+    }
+    .action-badge.action-safe {
+        background: rgba(52, 201, 139, 0.12);
+        color: var(--primary);
+    }
+    .action-badge.action-info {
+        background: var(--info-blue-soft);
+        color: var(--info-blue);
+    }
+    .action-badge.action-neutral {
+        background: #F3F4F6;
+        color: var(--text-secondary);
+    }
+
+    /* Loading skeleton */
+    .audit-loading {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+    .audit-loading i {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Role badge in table */
+    .role-pill {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .role-admin {
+        background: var(--bg-subtle);
+        color: var(--primary);
+    }
+    .role-employee {
+        background: var(--info-blue-soft);
+        color: var(--info-blue);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-1100 pb-5">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-end mb-4" data-aos="fade-down">
+        <div class="text-start">
+            <h1 class="page-title mb-1">Admin Dashboard</h1>
+            <p class="page-subtitle mb-0">System overview, user management, and audit trail.</p>
+        </div>
+        <span class="badge-custom badge-verified">
+            <i class="fas fa-shield-alt"></i> Administrator
+        </span>
+    </div>
+
+    <!-- ===== STATISTICS ROW ===== -->
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="50">
+            <div class="stat-card card-users">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon icon-users"><i class="fas fa-users"></i></div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-sub">
+                    <span class="dot dot-active"></span> {{ active_users }} active
+                    &nbsp;&bull;&nbsp;
+                    <span class="dot dot-inactive"></span> {{ inactive_users }} inactive
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+            <div class="stat-card card-rx">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon icon-rx"><i class="fas fa-file-prescription"></i></div>
+                    <div class="stat-label">Prescriptions</div>
+                </div>
+                <div class="stat-number">{{ total_prescriptions }}</div>
+                <div class="stat-sub">Total analyzed to date</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="150">
+            <div class="stat-card card-audit">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon icon-audit"><i class="fas fa-clipboard-list"></i></div>
+                    <div class="stat-label">Audit Events</div>
+                </div>
+                <div class="stat-number">{{ total_audit_events }}</div>
+                <div class="stat-sub">System-wide logged actions</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+            <div class="stat-card card-alerts">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon icon-alerts"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-label">Security Alerts</div>
+                </div>
+                <div class="stat-number">{{ alert_count }}</div>
+                <div class="stat-sub">Deletions &amp; critical events</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== USER MANAGEMENT ===== -->
+    <div class="admin-table-wrap mb-5" data-aos="fade-up" data-aos-delay="100">
+        <div class="table-header-bar">
+            <div>
+                <h2 class="section-title mb-0" style="font-size: 1.05rem;">User Management</h2>
+                <div class="mono-small mt-1">Activate or deactivate user accounts</div>
+            </div>
+            <span class="badge-custom badge-medicine">
+                <i class="fas fa-user-cog me-1"></i> {{ users|length }} accounts
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="admin-table" id="userTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <span class="mono-text" style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary);">
+                                #{{ user[0] }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-weight: 600; color: var(--text-primary);">{{ user[1] }}</span>
+                        </td>
+                        <td>
+                            <span style="font-size: 0.85rem;">{{ user[2] or '—' }}</span>
+                        </td>
+                        <td>
+                            <span class="role-pill {% if user[3] == 'admin' %}role-admin{% else %}role-employee{% endif %}">
+                                {{ user[3]|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user[4] == 1 or user[4] is none %}
+                                <span class="status-active">Active</span>
+                            {% else %}
+                                <span class="status-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            {% if user[3] != 'admin' %}
+                                <form action="/admin/toggle_user/{{ user[0] }}" method="POST" style="display: inline;">
+                                    {% if user[4] == 1 or user[4] is none %}
+                                        <button type="submit" class="btn-toggle-deactivate"
+                                                onclick="return confirm('Deactivate user {{ user[1] }}?')">
+                                            <i class="fas fa-ban" style="font-size: 0.72rem;"></i> Deactivate
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn-toggle-activate">
+                                            <i class="fas fa-check-circle" style="font-size: 0.72rem;"></i> Activate
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            {% else %}
+                                <span class="mono-small">Protected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="fas fa-users-slash mb-2" style="font-size: 1.5rem; color: var(--border-strong);"></i><br>
+                            No user accounts found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== AUDIT LOG VIEWER ===== -->
+    <div class="admin-table-wrap" data-aos="fade-up" data-aos-delay="150">
+        <div class="table-header-bar" style="flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h2 class="section-title mb-0" style="font-size: 1.05rem;">Audit Log</h2>
+                <div class="mono-small mt-1">Filter and browse system activity</div>
+            </div>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="filterUserId">User ID</label>
+                    <input type="text" id="filterUserId" placeholder="e.g. 1">
+                </div>
+                <div class="filter-group">
+                    <label for="filterAction">Event Type</label>
+                    <select id="filterAction">
+                        <option value="">All Events</option>
+                        {% for action in action_types %}
+                        <option value="{{ action }}">{{ action }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn-filter" onclick="loadAuditLogs(1)">
+                    <i class="fas fa-search"></i> Apply
+                </button>
+                <button class="btn-reset-filter" onclick="resetFilters()">
+                    <i class="fas fa-redo-alt"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="admin-table" id="auditTable">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th style="width: 80px;">User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th style="width: 170px;">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="auditBody">
+                    <tr>
+                        <td colspan="5" class="audit-loading">
+                            <i class="fas fa-circle-notch fa-lg"></i>
+                            <div class="mt-2" style="font-size: 0.85rem;">Loading audit logs...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar" id="auditPagination" style="display: none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-btns" id="paginationBtns"></div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 1;
+
+    function loadAuditLogs(page) {
+        currentPage = page;
+        const userId = document.getElementById('filterUserId').value.trim();
+        const action = document.getElementById('filterAction').value;
+
+        let url = `/admin/audit-logs?page=${page}&per_page=15`;
+        if (userId) url += `&user_id=${encodeURIComponent(userId)}`;
+        if (action) url += `&action=${encodeURIComponent(action)}`;
+
+        const body = document.getElementById('auditBody');
+        body.innerHTML = `<tr><td colspan="5" class="audit-loading">
+            <i class="fas fa-circle-notch fa-lg"></i>
+            <div class="mt-2" style="font-size: 0.85rem;">Loading...</div>
+        </td></tr>`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                renderAuditTable(data);
+                renderPagination(data);
+            })
+            .catch(() => {
+                body.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">
+                    <i class="fas fa-exclamation-circle mb-2" style="font-size: 1.5rem; color: var(--danger);"></i><br>
+                    Failed to load audit logs.
+                </td></tr>`;
+            });
+    }
+
+    function renderAuditTable(data) {
+        const body = document.getElementById('auditBody');
+        if (!data.logs || data.logs.length === 0) {
+            body.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">
+                <i class="fas fa-folder-open mb-2" style="font-size: 1.5rem; color: var(--border-strong);"></i><br>
+                No audit logs match your filters.
+            </td></tr>`;
+            return;
+        }
+
+        let html = '';
+        data.logs.forEach(log => {
+            const badgeClass = getActionBadgeClass(log.action);
+            html += `<tr>
+                <td><span class="mono-text" style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary);">#${log.audit_id}</span></td>
+                <td><span style="font-weight: 600; color: var(--primary);">${log.user_id}</span></td>
+                <td><span class="action-badge ${badgeClass}">${escapeHtml(log.action)}</span></td>
+                <td style="font-size: 0.85rem; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(log.details || '')}">${escapeHtml(log.details || '—')}</td>
+                <td><span class="mono-text" style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(log.timestamp || '')}</span></td>
+            </tr>`;
+        });
+        body.innerHTML = html;
+    }
+
+    function getActionBadgeClass(action) {
+        if (!action) return 'action-neutral';
+        const a = action.toLowerCase();
+        if (a.includes('delete') || a.includes('deactivat') || a.includes('fail') || a.includes('error'))
+            return 'action-danger';
+        if (a.includes('add') || a.includes('creat') || a.includes('activat') || a.includes('login'))
+            return 'action-safe';
+        if (a.includes('edit') || a.includes('updat') || a.includes('analyz') || a.includes('prescription'))
+            return 'action-info';
+        return 'action-neutral';
+    }
+
+    function renderPagination(data) {
+        const bar = document.getElementById('auditPagination');
+        const info = document.getElementById('paginationInfo');
+        const btns = document.getElementById('paginationBtns');
+
+        if (data.total_pages <= 1 && data.total <= 15) {
+            info.textContent = `Showing all ${data.total} entries`;
+            btns.innerHTML = '';
+            bar.style.display = 'flex';
+            return;
+        }
+
+        bar.style.display = 'flex';
+        const start = (data.page - 1) * 15 + 1;
+        const end = Math.min(data.page * 15, data.total);
+        info.textContent = `Showing ${start}–${end} of ${data.total} entries`;
+
+        let html = '';
+        html += `<button class="page-btn" onclick="loadAuditLogs(${data.page - 1})" ${data.page <= 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left" style="font-size: 0.7rem;"></i>
+        </button>`;
+
+        // Show pages intelligently
+        const pages = getPageRange(data.page, data.total_pages);
+        pages.forEach(p => {
+            if (p === '...') {
+                html += `<span style="padding: 0 4px; color: var(--text-muted);">…</span>`;
+            } else {
+                html += `<button class="page-btn ${p === data.page ? 'active' : ''}" onclick="loadAuditLogs(${p})">${p}</button>`;
+            }
+        });
+
+        html += `<button class="page-btn" onclick="loadAuditLogs(${data.page + 1})" ${data.page >= data.total_pages ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right" style="font-size: 0.7rem;"></i>
+        </button>`;
+
+        btns.innerHTML = html;
+    }
+
+    function getPageRange(current, total) {
+        if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+        const pages = [];
+        pages.push(1);
+        if (current > 3) pages.push('...');
+        for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+            pages.push(i);
+        }
+        if (current < total - 2) pages.push('...');
+        pages.push(total);
+        return pages;
+    }
+
+    function resetFilters() {
+        document.getElementById('filterUserId').value = '';
+        document.getElementById('filterAction').value = '';
+        loadAuditLogs(1);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Load audit logs on page ready
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAuditLogs(1);
+    });
+</script>
+{% endblock %}

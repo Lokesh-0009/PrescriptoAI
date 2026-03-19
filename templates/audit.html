@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs &ndash; PrescriptoAI{% endblock %}
+
+{% block custom_css %}
+<style>
+.table-custom {
+    background: var(--bg-surface);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+.table-custom thead {
+    background-color: #F4FAF7;
+    border-bottom: 2px solid var(--border-color);
+}
+.table-custom th {
+    padding: 1rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    color: var(--text-primary);
+    border: none;
+}
+.table-custom td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--bg-subtle);
+}
+.table-custom tbody tr {
+    transition: background 200ms ease;
+}
+.table-custom tbody tr:hover {
+    background-color: #F9FDFA;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-1100">
+
+    <div class="mb-4 d-flex justify-content-between align-items-end" data-aos="fade-down">
+        <div>
+            <h1 class="page-title mb-1">Security Audit Logs</h1>
+            <p class="text-muted mb-0">Monitor all restricted events across the platform</p>
+        </div>
+        <div class="d-none d-sm-block">
+            <span class="badge-custom badge-warning">
+                <i class="fas fa-lock"></i> Restricted Access
+            </span>
+        </div>
+    </div>
+
+    <div class="table-responsive" data-aos="fade-up" data-aos-delay="100">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>User Identifier</th>
+                    <th>Action Event</th>
+                    <th>System Details</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: var(--primary);">
+                            {{ log[1] }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if 'login' in log[2]|lower %}
+                            <span class="badge-custom badge-safe text-capitalize">{{ log[2] }}</span>
+                        {% elif 'error' in log[2]|lower or 'fail' in log[2]|lower %}
+                            <span class="badge-custom badge-danger text-capitalize">{{ log[2] }}</span>
+                        {% elif 'download' in log[2]|lower or 'view' in log[2]|lower %}
+                            <span class="badge-custom badge-info text-capitalize">{{ log[2] }}</span>
+                        {% else %}
+                            <span class="badge-custom badge-neutral text-capitalize">{{ log[2] }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted" style="font-size: 0.9rem; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ log[3] }}
+                    </td>
+                    <td class="mono-text text-muted" style="font-size: 0.85rem;">
+                        {{ log[4] }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="fas fa-folder-open mb-3" style="font-size: 2rem; color: var(--border-color);"></i>
+                        <p class="mb-0">No audit logs available in the secure database.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}
+PrescriptoAI &ndash; Clinical Document Intelligence
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<div class="row align-items-center section-spacing mt-4">
+    
+    <!-- LEFT: Text & Form -->
+    <div class="col-lg-6 mb-5 mb-lg-0 pe-lg-5" data-aos="fade-up">
+        
+        <h1 class="mb-3" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 2.1rem; color: var(--text-primary); line-height: 1.25;">
+            Analyze Medical <br/>
+            Prescriptions with AI
+        </h1>
+        
+        <p class="mb-4" style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; max-width: 440px;">
+            Instantly digitize handwritten prescriptions, detect disease risks, and map pharmaceutical safety protocols with clinical precision.
+        </p>
+
+        <!-- UPLOAD FORM CARD -->
+        <div class="medical-card" style="border-top: 3px solid var(--primary); padding: 1.75rem;">
+            
+            <form action="/upload" method="POST" enctype="multipart/form-data" id="upload-form">
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label class="label-text">PATIENT ID</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" class="form-control-custom" name="patient_name" placeholder="John Doe" required>
+                            <i class="fas fa-user ps-1"></i>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="label-text">ATTENDING PHYSICIAN</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" class="form-control-custom" name="doctor_name" placeholder="Dr. Smith" required>
+                            <i class="fas fa-user-md ps-1"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3 mt-4">
+                    <label class="label-text">PRESCRIPTION DOCUMENT</label>
+                    
+                    <div class="drop-zone position-relative overflow-hidden" 
+                         style="background-color: var(--bg-subtle); border: 1.5px dashed var(--border-strong); border-radius: 10px; padding: 2rem; text-align: center; transition: var(--transition-fast);">
+                        <input type="file" id="prescription_image" name="prescription_image" accept="image/*" required 
+                               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;" onchange="document.getElementById('file-label').innerText = this.files.length ? this.files[0].name : 'Select or drag image';">
+                        
+                        <div class="drop-zone-content position-relative" style="z-index: 1;">
+                            <i class="fas fa-cloud-upload-alt mb-2" style="font-size: 2rem; color: var(--primary); transition: var(--transition-fast);"></i>
+                            <div id="file-label" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">
+                                Select or drag image
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                                Supports JPG, PNG layout formats
+                            </div>
+                        </div>
+                        
+                        <!-- Hover styles injected inline for simplicity without breaking global css -->
+                        <style>
+                            .drop-zone:hover { border-color: var(--primary) !important; background-color: #E2EFE7 !important; }
+                            .drop-zone:hover .fa-cloud-upload-alt { transform: scale(1.1); }
+                        </style>
+                    </div>
+                </div>
+
+                <button type="submit" id="process-btn" class="btn-primary-custom w-100 mt-3" style="height: 44px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">
+                    <i class="fas fa-upload" id="btn-icon"></i> <span id="btn-text">PROCESS DOCUMENT</span>
+                </button>
+
+                <div class="text-center mt-3">
+                    <i class="fas fa-lock" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 4px;">Data is processed securely and encrypted</span>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT: Medical Hero SVG Art -->
+    <div class="col-lg-6 d-none d-lg-block text-center position-relative" data-aos="fade-left" data-aos-delay="200">
+        
+        <!-- Subtle background circle -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background-color: var(--bg-subtle); border-radius: 50%; z-index: 0;"></div>
+
+        <!-- Simple, clean, professional SVG matching the aesthetic -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="auto" style="max-width: 450px; position: relative; z-index: 1;">
+            <!-- Document Base -->
+            <rect x="160" y="100" width="220" height="300" rx="16" fill="var(--bg-surface)" stroke="var(--border-color)" stroke-width="2" />
+            
+            <!-- Document Lines -->
+            <line x1="190" y1="150" x2="350" y2="150" stroke="var(--bg-subtle)" stroke-width="8" stroke-linecap="round" />
+            <line x1="190" y1="180" x2="320" y2="180" stroke="var(--bg-subtle)" stroke-width="8" stroke-linecap="round" />
+            <line x1="190" y1="210" x2="280" y2="210" stroke="var(--bg-subtle)" stroke-width="8" stroke-linecap="round" />
+            
+            <!-- Medical Cross Badge -->
+            <rect x="290" y="260" width="60" height="60" rx="12" fill="var(--bg-subtle)" />
+            <path d="M312 290 h16 m-8 -8 v16" stroke="var(--primary)" stroke-width="6" stroke-linecap="round" />
+            
+            <!-- AI Nodes (Connecting to document) -->
+            <circle cx="120" cy="250" r="24" fill="#EAF4FB" stroke="#2196C4" stroke-width="2" />
+            <circle cx="160" cy="360" r="16" fill="#FEF4E4" stroke="#F5A623" stroke-width="2" />
+            <path d="M144 250 L160 250" stroke="#2196C4" stroke-width="2" stroke-dasharray="4" />
+            <path d="M160 360 L200 360" stroke="#F5A623" stroke-width="2" stroke-dasharray="4" />
+            
+            <text x="110" y="255" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14" fill="#2196C4">AI</text>
+            
+            <!-- Stethoscope Graphic overlay -->
+            <path d="M350 140 C 420 140, 420 280, 350 280 L 330 280" fill="none" stroke="var(--primary)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="330" cy="280" r="14" fill="var(--bg-surface)" stroke="var(--primary)" stroke-width="6" />
+        </svg>
+    </div>
+</div>
+
+<!-- INFO CARDS SECTION -->
+<div class="row pt-5 mt-4 section-spacing border-top" style="border-color: var(--border) !important;">
+    
+    <div class="col-md-4 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay="0">
+        <div class="medical-card h-100 hover-lift">
+            <div class="icon-box medical-ocr mb-3">
+                <i class="fas fa-file-medical-alt"></i>
+            </div>
+            <h3 class="section-title">Medical OCR</h3>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                Precision-engineered character recognition for extracting clinical notes from handwritten prescriptions.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay="100">
+        <div class="medical-card h-100 hover-lift">
+            <div class="icon-box disease mb-3">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3 class="section-title">Disease Inference</h3>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                Intelligent predictive modeling to highlight early risks for conditions like diabetes and hypertension based on symptoms.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="medical-card h-100 hover-lift">
+            <div class="icon-box drug-safety mb-3">
+                <i class="fas fa-prescription-bottle-alt"></i>
+            </div>
+            <h3 class="section-title">Safety Validation</h3>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                Automated clinical checks for severe drug interactions and potentially dangerous dosage combinations.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('upload-form').addEventListener('submit', function(e) {
+        const btn = document.getElementById('process-btn');
+        const icon = document.getElementById('btn-icon');
+        const text = document.getElementById('btn-text');
+        
+        // Only activate spinner if form is valid
+        if (!this.checkValidity()) return;
+        
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+        icon.className = 'fas fa-circle-notch fa-spin';
+        text.textContent = 'ANALYZING...';
+        btn.style.animation = 'pulse-btn 1.5s ease infinite';
+    });
+</script>
+<style>
+    @keyframes pulse-btn {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(15, 107, 80, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(15, 107, 80, 0); }
+    }
+</style>
+{% endblock %}
