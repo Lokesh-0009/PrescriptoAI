@@ -1,0 +1,8 @@
+flask
+gunicorn
+transformers
+torch --index-url https://download.pytorch.org/whl/cpu
+Pillow
+pytesseract
+opencv-python-headless
+numpy

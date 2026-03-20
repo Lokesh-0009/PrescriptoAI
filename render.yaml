@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: prescripto-ai
+    env: docker # Using Docker to support Tesseract and system dependencies
+    plan: starter # Starter plan recommended due to AI model RAM requirements
+    region: oregon # Or your preferred region
+    envVars:
+      - key: PORT
+        value: 10000

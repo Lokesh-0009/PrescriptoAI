@@ -5,3 +5,4 @@ __pycache__/
 medical_system.db
 logs/
 .vscode/
+static/uploads/

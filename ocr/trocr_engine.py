@@ -4,8 +4,15 @@ import pytesseract
 import cv2
 import torch
 import numpy as np
-import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+import os
+import platform
+
+# Tesseract setup
+if platform.system() == "Windows":
+    tesseract_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    if os.path.exists(tesseract_path):
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+# On Linux (Render/Docker), it should be in the PATH automatically
 
 # TrOCR setup
 processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
