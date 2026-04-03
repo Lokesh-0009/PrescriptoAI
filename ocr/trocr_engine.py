@@ -15,8 +15,8 @@ if platform.system() == "Windows":
 # On Linux (Render/Docker), it should be in the PATH automatically
 
 # TrOCR setup
-processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+processor = TrOCRProcessor.from_pretrained("microsoft/trocr-large-handwritten")
+model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-large-handwritten")
 device = torch.device("cpu")
 model.to(device)
 

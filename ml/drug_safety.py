@@ -1,4 +1,7 @@
 import re
+import urllib.request
+import urllib.parse
+import json
 
 # ===============================
 # Drug Interaction Database
@@ -65,6 +68,52 @@ DRUG_INTERACTIONS = {
         "severity": "moderate",
         "action": "Monitor INR during and after azithromycin course."
     },
+    # --- Expanded Expert System Interactions ---
+    ("sildenafil", "isosorbide"): {
+        "description": "Risk of severe hypotension. Concurrent use is strictly contraindicated.",
+        "severity": "major",
+        "action": "AVOID concurrent use. Check for nitrate use before prescribing."
+    },
+    ("clarithromycin", "simvastatin"): {
+        "description": "Significantly increased risk of myopathy and rhabdomyolysis.",
+        "severity": "major",
+        "action": "AVOID concurrent use. Switch statin or withhold during therapy."
+    },
+    ("lisinopril", "spironolactone"): {
+        "description": "Increased risk of severe hyperkalemia.",
+        "severity": "major",
+        "action": "Monitor potassium levels and renal function closely."
+    },
+    ("amiodarone", "levofloxacin"): {
+        "description": "High risk of QT prolongation and Torsades de Pointes.",
+        "severity": "major",
+        "action": "AVOID concurrent use. If necessary, monitor ECG closely."
+    },
+    ("fluoxetine", "tramadol"): {
+        "description": "Risk of serotonin syndrome and reduced analgesia.",
+        "severity": "major",
+        "action": "Monitor for serotonin toxicity. Consider alternative analgesic."
+    },
+    ("methotrexate", "trimethoprim"): {
+        "description": "Increased risk of severe bone marrow suppression.",
+        "severity": "major",
+        "action": "AVOID concurrent use due to synergistic folate antagonism."
+    },
+    ("warfarin", "ciprofloxacin"): {
+        "description": "Increased bleeding risk due to altered gut flora and CYP inhibition.",
+        "severity": "major",
+        "action": "Monitor INR closely and adjust warfarin dose appropriately."
+    },
+    ("clopidogrel", "esomeprazole"): {
+        "description": "Reduced antiplatelet efficacy of clopidogrel.",
+        "severity": "moderate",
+        "action": "Consider switching to pantoprazole or prescribing alternative."
+    },
+    ("amoxicillin", "methotrexate"): {
+        "description": "Penicillins may reduce the excretion of methotrexate, increasing risk of toxicity.",
+        "severity": "moderate",
+        "action": "Monitor methotrexate concentrations closely."
+    },
 }
 
 # ===============================
@@ -93,6 +142,11 @@ SAFE_DOSAGE_LIMITS = {
     "ranitidine": 300,
     "domperidone": 30,
     "clopidogrel": 75,
+    "simvastatin": 40,
+    "levofloxacin": 750,
+    "tramadol": 400,
+    "fluoxetine": 80,
+    "sildenafil": 100,
 }
 
 # ===============================
@@ -108,11 +162,10 @@ def extract_dosage(text):
 
 # ===============================
 # Drug Interaction Analysis
-# Returns list of dicts with severity
 # ===============================
 def analyze_drug_interactions(medicines):
     interactions = []
-    meds = [m.lower() for m in medicines if m != "Not Detected"]
+    meds = [m.lower() for m in medicines if m != "not detected" and m != "Not Detected"]
 
     for i in range(len(meds)):
         for j in range(i + 1, len(meds)):
@@ -139,7 +192,7 @@ def analyze_drug_interactions(medicines):
             "drug_a": "",
             "drug_b": "",
             "severity": "none",
-            "description": "No harmful drug interactions detected in the prescribed list.",
+            "description": "No harmful drug interactions detected.",
             "action": "Continue standard monitoring.",
         })
 
